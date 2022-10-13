@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import { getCategories } from "../../redux/actions/catgoryActions";
 import { saveProduct } from "../../redux/actions/productActions";
+import ProductDetail from "./ProductDetail";
+import { useParams } from "react-router-dom";
 
 function AddOrUpdateProduct({
   products,
@@ -13,6 +15,7 @@ function AddOrUpdateProduct({
   ...props
 }) {
   const [product, setProduct] = useState({ ...props.product });
+  const [errors, setErrors] = useState({});
   useEffect(() => {
     if (categories.length === 0) {
       getCategories();
@@ -26,6 +29,22 @@ function AddOrUpdateProduct({
       ...previousProduct,
       [name]: name === "categoryId" ? parseInt(value, 10) : value,
     }));
+    validate(name, value);
+  }
+
+  function validate(name, value) {
+    if (name === "productName" && value === "") {
+      setErrors((previousErrors) => ({
+        ...previousErrors,
+        productName: "It must be product name"
+      }));
+    }
+    else{
+      setErrors((previousErrors) => ({
+        ...previousErrors,
+        productName: ""
+      }));
+    }
   }
   function handleSave(event) {
     event.preventDeafult();
@@ -34,25 +53,31 @@ function AddOrUpdateProduct({
     });
   }
   return (
-    
-  )
+    <ProductDetail
+      product={product}
+      categories={categories}
+      onChange={handleChange}
+      onSave={handleSave}
+      errors={errors}
+    />
+  );
 }
 
-export function getProductByID(products, productId) {
-  let product = products.find((product) => product.id === productId) || null;
+export function getProductById(products, productId) {
+  let product = products.find((product) => product.id == productId) || null;
   return product;
 }
 
-function mapStateToProps(state, ownProps) {
-  const productId = ownProps.match.params.productId;
+function mapStateToProps(state) {
+  const { productId } = useParams();
   const product =
-    productId && state.producReducer.length > 0
-      ? getProductByID(state.producReducer, productId)
+    productId && state.productListReducer.length > 0
+      ? getProductById(state.productListReducer, productId)
       : {};
   return {
     product,
-    products: state.producReducer,
-    categories: state.categoryReducer,
+    products: state.productListReducer,
+    categories: state.categoryListReducer,
   };
 }
 
@@ -61,4 +86,4 @@ const mapDispatchToProps = {
   saveProduct,
 };
 
-export default connect(mapDispatchToProps, mapStateToProps)(AddOrUpdateProduct);
+export default connect(mapStateToProps, mapDispatchToProps)(AddOrUpdateProduct);
